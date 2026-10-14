@@ -111,15 +111,15 @@ __metadata:
     datatables.net-buttons: "npm:^4.1.2"
     datatables.net-buttons-bs5: "npm:^4.1.2"
     datatables.net-buttons-dt: "npm:^4.1.2"
-    fontawesome-free: "npm:@fortawesome/fontawesome-free@^6.7.2"
+    fontawesome-free: "npm:@fortawesome/fontawesome-free@^7.0.0"
     jquery: "npm:4.0.0"
     jquery-ui: "npm:1.14.2"
   languageName: unknown
   linkType: soft
 
-"fontawesome-free@npm:@fortawesome/fontawesome-free@^6.7.2":
-  version: 6.7.2
-  resolution: "@fortawesome/fontawesome-free@npm:6.7.2"
+"fontawesome-free@npm:@fortawesome/fontawesome-free@^7.0.0":
+  version: 7.0.0
+  resolution: "@fortawesome/fontawesome-free@npm:7.0.0"
   checksum: 10c0/e27fb8b846f0bcf40c904acc210829a640329fc7b7ec4e42a7c43cb53739ed6052d78df90810f555a5c80bc608fee5a5174db3fa6da617f582d6210009a19278
   languageName: node
   linkType: hard
