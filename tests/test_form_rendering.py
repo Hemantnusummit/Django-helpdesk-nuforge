@@ -9,6 +9,8 @@ the old rendering fails here rather than being noticed by a user.
 
 from django import forms
 from django.template import Context, Template
+from pathlib import Path
+
 from django.test import TestCase
 from django.urls import reverse
 
@@ -132,6 +134,17 @@ class RenderedMarkupTestCase(TestCase):
         self.assertIn("alert alert-danger", html)
         self.assertIn("data-bs-dismiss", html)
         self.assertNotIn("data-dismiss=", html.replace("data-bs-dismiss=", ""))
+
+
+class FontAwesomeCompatibilityTestCase(TestCase):
+    def test_sb_admin_dropdown_arrow_uses_fontawesome_7_font_family(self):
+        scss = Path("src/helpdesk/static/helpdesk/scss/_navbar.scss").read_text()
+        minified_css = Path("src/helpdesk/static/helpdesk/css/sb-admin.min.css").read_text()
+
+        self.assertIn("Font Awesome 7 Free", scss)
+        self.assertNotIn("Font Awesome 5 Free", scss)
+        self.assertIn("Font Awesome 7 Free", minified_css)
+        self.assertNotIn("Font Awesome 5 Free", minified_css)
 
 
 class RealPagesTestCase(TestCase):
