@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.test.client import Client
 from django.urls import reverse
 
@@ -8,6 +8,7 @@ from helpdesk.models import Queue, Ticket
 User = get_user_model()
 
 
+@override_settings(HELPDESK_VIEW_A_TICKET_PUBLIC=True)
 class PublicActionsTestCase(TestCase):
     """
     Tests for public actions:
