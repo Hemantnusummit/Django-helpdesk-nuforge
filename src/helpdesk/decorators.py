@@ -30,14 +30,7 @@ def check_staff_status(check_staff=False):
     return check_superuser_status
 
 
-if callable(helpdesk_settings.HELPDESK_ALLOW_NON_STAFF_TICKET_UPDATE):
-    # apply a custom user validation condition
-    is_helpdesk_staff = helpdesk_settings.HELPDESK_ALLOW_NON_STAFF_TICKET_UPDATE
-elif helpdesk_settings.HELPDESK_ALLOW_NON_STAFF_TICKET_UPDATE:
-    # treat 'normal' users like 'staff'
-    is_helpdesk_staff = check_staff_status(False)(False)
-else:
-    is_helpdesk_staff = check_staff_status(True)(False)
+is_helpdesk_staff = check_staff_status(True)(False)
 
 helpdesk_staff_member_required = user_passes_test(is_helpdesk_staff)
 helpdesk_superuser_required = user_passes_test(check_staff_status(False)(True))
@@ -78,10 +71,7 @@ def staff_member_required(view_func):
     def _wrapped_view(request, *args, **kwargs):
         if not request.user.is_authenticated and not request.user.is_active:
             return redirect("helpdesk:login")
-        if (
-            not helpdesk_settings.HELPDESK_ALLOW_NON_STAFF_TICKET_UPDATE
-            and not request.user.is_staff
-        ):
+        if not request.user.is_staff:
             raise PermissionDenied()
         if auth_redirect := helpdesk_settings.HELPDESK_STAFF_VIEW_PROTECTOR(request):
             return auth_redirect

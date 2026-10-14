@@ -118,15 +118,9 @@ DATE_RE: re.Pattern = re.compile(
 User = get_user_model()
 Query = get_query_class()
 
-if helpdesk_settings.HELPDESK_ALLOW_NON_STAFF_TICKET_UPDATE:
-    # treat 'normal' users like 'staff'
-    staff_member_required = user_passes_test(
-        lambda u: u.is_authenticated and u.is_active
-    )
-else:
-    staff_member_required = user_passes_test(
-        lambda u: u.is_authenticated and u.is_active and u.is_staff
-    )
+staff_member_required = user_passes_test(
+    lambda u: u.is_authenticated and u.is_active and u.is_staff
+)
 
 
 def _get_queue_choices(queues):
@@ -728,10 +722,7 @@ def get_ticket_from_request_with_authorisation(
         or (
             request.user.is_authenticated
             and request.user.is_active
-            and (
-                is_helpdesk_staff(request.user)
-                or helpdesk_settings.HELPDESK_ALLOW_NON_STAFF_TICKET_UPDATE
-            )
+            and is_helpdesk_staff(request.user)
         )
     ):
         try:
@@ -1495,9 +1486,7 @@ class CreateTicketView(
             return reverse("helpdesk:dashboard")
 
 
-class UpdateTicketView(
-    MustBeStaffMixin, abstract_views.AbstractCreateTicketMixin, UpdateView
-):
+class UpdateTicketView(abstract_views.AbstractCreateTicketMixin, UpdateView):
     template_name = "helpdesk/ticket.html"
     form_class = TicketForm
 
@@ -1540,13 +1529,16 @@ class UpdateTicketView(
         return kwargs
 
     def get_object(self, queryset=None):
-        # Starts from the authorized queryset rather than the default manager,
-        # so a foreign-queue id is a 404 here as it is in the sibling routes.
-        # Those call ticket_perm_check() after resolving; this class resolves
-        # through the queryset instead, which cannot be forgotten separately.
         ticket_id = self.kwargs["ticket_id"]
-        return get_object_or_404(
-            HelpdeskUser(self.request.user).accessible_tickets(), id=ticket_id
+        if self.request.user.is_authenticated and is_helpdesk_staff(self.request.user):
+            # Starts from the authorized queryset rather than the default
+            # manager, so a foreign-queue id is a 404 here as it is in the
+            # sibling routes.
+            return get_object_or_404(
+                HelpdeskUser(self.request.user).accessible_tickets(), id=ticket_id
+            )
+        return get_ticket_from_request_with_authorisation(
+            self.request, ticket_id, False
         )
 
     def form_valid(self, form):
@@ -1556,6 +1548,8 @@ class UpdateTicketView(
                 self.request, ticket_id, False
             )
         except PermissionDenied:
+            if self.request.user.is_authenticated:
+                raise
             return redirect_to_login(self.request.path, settings.LOGIN_URL)
         # Avoid calling super as it will call the save() method on the form
         save_ticket_update(form, self.ticket, self.request.user)

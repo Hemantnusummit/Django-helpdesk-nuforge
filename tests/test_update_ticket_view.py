@@ -1,10 +1,19 @@
+from unittest import mock
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from helpdesk.models import CustomField, Queue, Ticket
+from helpdesk import settings as helpdesk_settings
+from helpdesk.models import CustomField, FollowUp, Queue, Ticket
 
 User = get_user_model()
+
+
+def allow(value):
+    return mock.patch.object(
+        helpdesk_settings, "HELPDESK_ALLOW_NON_STAFF_TICKET_UPDATE", value
+    )
 
 
 class UpdateTicketViewTests(TestCase):
@@ -34,6 +43,58 @@ class UpdateTicketViewTests(TestCase):
 
         # Try accessing again (simulating redirect after login)
         response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Sample ticket")
+
+
+class UpdateTicketSubmitterAccessTests(TestCase):
+    def setUp(self):
+        self.queue = Queue.objects.create(title="Test Queue", slug="test")
+        self.staff = User.objects.create_user(
+            username="staffuser", password="pass123", is_staff=True
+        )
+        self.ticket = Ticket.objects.create(
+            title="Sample ticket",
+            queue=self.queue,
+            submitter_email="submitter@example.com",
+            secret_key="secret123",
+        )
+        self.url = reverse("helpdesk:update", kwargs={"ticket_id": self.ticket.id})
+
+    def test_non_staff_submitter_can_open_update_form_with_mail_and_key(self):
+        with allow(True):
+            response = self.client.post(
+                self.url,
+                {"mail": self.ticket.submitter_email, "key": self.ticket.secret_key},
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Sample ticket")
+
+    def test_non_staff_submitter_can_update_ticket_with_mail_and_key(self):
+        with allow(True):
+            response = self.client.post(
+                self.url,
+                {
+                    "mail": self.ticket.submitter_email,
+                    "key": self.ticket.secret_key,
+                    "title": self.ticket.title,
+                    "queue": self.queue.id,
+                    "body": "Updated by submitter",
+                    "priority": self.ticket.priority,
+                    "new_status": self.ticket.status,
+                },
+            )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, self.ticket.ticket_url)
+        self.assertTrue(
+            FollowUp.objects.filter(
+                ticket=self.ticket, comment__contains="Updated by submitter"
+            ).exists()
+        )
+
+    def test_staff_user_can_still_open_update_form(self):
+        self.client.login(username="staffuser", password="pass123")
+        response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Sample ticket")
 
