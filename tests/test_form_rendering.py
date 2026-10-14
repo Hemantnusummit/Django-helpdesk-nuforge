@@ -142,8 +142,10 @@ class FontAwesomeCompatibilityTestCase(TestCase):
         minified_css = Path("src/helpdesk/static/helpdesk/css/sb-admin.min.css").read_text()
 
         self.assertIn("Font Awesome 7 Free", scss)
+        self.assertNotIn("Font Awesome 6 Free", scss)
         self.assertNotIn("Font Awesome 5 Free", scss)
         self.assertIn("Font Awesome 7 Free", minified_css)
+        self.assertNotIn("Font Awesome 6 Free", minified_css)
         self.assertNotIn("Font Awesome 5 Free", minified_css)
 
 
