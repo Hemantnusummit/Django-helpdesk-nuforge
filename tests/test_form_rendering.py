@@ -137,16 +137,22 @@ class RenderedMarkupTestCase(TestCase):
 
 
 class FontAwesomeCompatibilityTestCase(TestCase):
-    def test_sb_admin_dropdown_arrow_uses_fontawesome_7_font_family(self):
-        scss = Path("src/helpdesk/static/helpdesk/scss/_navbar.scss").read_text()
-        minified_css = Path("src/helpdesk/static/helpdesk/css/sb-admin.min.css").read_text()
+    def assert_uses_fontawesome_7_font_family(self, path):
+        content = Path(path).read_text()
 
-        self.assertIn("Font Awesome 7 Free", scss)
-        self.assertNotIn("Font Awesome 6 Free", scss)
-        self.assertNotIn("Font Awesome 5 Free", scss)
-        self.assertIn("Font Awesome 7 Free", minified_css)
-        self.assertNotIn("Font Awesome 6 Free", minified_css)
-        self.assertNotIn("Font Awesome 5 Free", minified_css)
+        self.assertIn("Font Awesome 7 Free", content)
+        self.assertNotIn("Font Awesome 6 Free", content)
+        self.assertNotIn("Font Awesome 5 Free", content)
+
+    def test_sb_admin_scss_uses_fontawesome_7_font_family(self):
+        self.assert_uses_fontawesome_7_font_family(
+            "src/helpdesk/static/helpdesk/scss/_navbar.scss"
+        )
+
+    def test_sb_admin_minified_css_uses_fontawesome_7_font_family(self):
+        self.assert_uses_fontawesome_7_font_family(
+            "src/helpdesk/static/helpdesk/css/sb-admin.min.css"
+        )
 
 
 class RealPagesTestCase(TestCase):
