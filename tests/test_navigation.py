@@ -208,29 +208,6 @@ class CustomStaffUserTestCase(StaffUserTestCaseMixin, TestCase):
         self.assertTemplateUsed(response, "helpdesk/registration/login.html")
 
 
-class FontAwesomeAssetsTestCase(TestCase):
-    def test_dashboard_includes_local_fontawesome_stylesheet(self):
-        user = get_staff_user()
-        self.client.login(username=user.username, password="password")
-
-        response = self.client.get(reverse("helpdesk:dashboard"))
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(
-            response,
-            '/static/helpdesk/vendor/fontawesome-free/css/all.min.css',
-        )
-
-    def test_public_homepage_includes_local_fontawesome_stylesheet(self):
-        response = self.client.get(reverse("helpdesk:home"))
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(
-            response,
-            '/static/helpdesk/vendor/fontawesome-free/css/all.min.css',
-        )
-
-
 class HomePageAnonymousUserTestCase(TestCase):
     def setUp(self):
         self.redirect_to_login = helpdesk_settings.HELPDESK_REDIRECT_TO_LOGIN_BY_DEFAULT
@@ -316,3 +293,26 @@ class ReturnToTicketTestCase(TestCase):
         ticket = create_ticket()
         response = return_to_ticket(user, ticket)
         self.assertEqual(response["location"], ticket.ticket_url)
+
+
+class FontAwesomeAssetsTestCase(TestCase):
+    def test_dashboard_includes_local_fontawesome_stylesheet(self):
+        user = get_staff_user()
+        self.client.login(username=user.username, password="password")
+
+        response = self.client.get(reverse("helpdesk:dashboard"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            '/static/helpdesk/vendor/fontawesome-free/css/all.min.css',
+        )
+
+    def test_public_homepage_includes_local_fontawesome_stylesheet(self):
+        response = self.client.get(reverse("helpdesk:home"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            '/static/helpdesk/vendor/fontawesome-free/css/all.min.css',
+        )
