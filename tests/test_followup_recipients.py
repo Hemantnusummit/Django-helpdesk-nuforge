@@ -1,3 +1,4 @@
+import json
 import logging
 
 from django.contrib.auth import get_user_model
@@ -15,6 +16,8 @@ User = get_user_model()
 
 class FollowUpRecipientsTests(TestCase):
     """``FollowUp.email_recipients`` records who was actually notified."""
+
+    fixtures = ["emailtemplate.json"]
 
     def setUp(self):
         self.queue = Queue.objects.create(
@@ -118,6 +121,50 @@ class FollowUpRecipientsTests(TestCase):
             sorted({address for message in mail.outbox for address in message.to}),
         )
         self.assertIn("submitter@example.com", followup.email_recipients)
+
+    def test_reopened_status_uses_reopened_template_and_notifies_submitter(self):
+        self.ticket.assigned_to = self.staff_user
+        self.ticket.status = Ticket.CLOSED_STATUS
+        self.ticket.save(update_fields=["assigned_to", "status"])
+
+        update_ticket(
+            user=self.staff_user,
+            ticket=self.ticket,
+            new_status=Ticket.REOPENED_STATUS,
+            public=True,
+        )
+
+        self.assertEqual(len(mail.outbox), 3)
+        messages_by_recipient = {
+            message.to[0]: message for message in mail.outbox
+        }
+        self.assertEqual(
+            messages_by_recipient["submitter@example.com"].subject,
+            "[products] (Reopened) Product not received",
+        )
+        self.assertEqual(
+            messages_by_recipient["staff@example.com"].subject,
+            "[products] (Reopened) Product not received",
+        )
+        self.assertEqual(
+            messages_by_recipient["queuecc@example.com"].subject,
+            "[products] (Reopened) Product not received",
+        )
+
+    def test_emailtemplate_fixture_includes_reopened_templates(self):
+        with open("src/helpdesk/fixtures/emailtemplate.json", encoding="utf-8") as fixture:
+            data = json.load(fixture)
+        template_names = {
+            item["fields"]["template_name"]
+            for item in data
+            if item["model"] == "helpdesk.emailtemplate"
+        }
+
+        self.assertTrue(
+            {"reopened_cc", "reopened_owner", "reopened_submitter"}.issubset(
+                template_names
+            )
+        )
 
 
 class FollowUpRecipientsDisplayTests(TestCase):
