@@ -87,6 +87,19 @@ class StaffTicketListViewTests(TestCase):
         # Check default query params are loaded
         self.assertEqual(r.context["query_params"], self.default_params)
 
+    def test_staff_ticket_list_loads_fontawesome_assets_and_icons(self):
+        self.client.force_login(self.staff_user)
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, HTTPStatus.OK)
+        self.assertContains(
+            response,
+            '/static/helpdesk/vendor/fontawesome-free/css/all.min.css',
+        )
+        self.assertContains(response, 'class="fa-solid fa-q me-2"', html=False)
+        self.assertContains(response, 'class="fa fa-floppy-disk me-2"', html=False)
+
     def test_sorting_dropdown_lists_all_sortable_columns(self):
         self.client.force_login(self.staff_user)
         r = self.client.get(self.url)
