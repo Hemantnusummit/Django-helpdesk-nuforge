@@ -1,8 +1,11 @@
+from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.test.client import Client
 from django.urls import reverse
 
 from helpdesk.models import Queue, Ticket
+
+User = get_user_model()
 
 
 class PublicActionsTestCase(TestCase):
@@ -55,6 +58,46 @@ class PublicActionsTestCase(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "helpdesk/public_view_ticket.html")
+
+    def test_authenticated_submitter_can_view_ticket_by_submitter_id(self):
+        user = User.objects.create(
+            username="submitter",
+            email="new-address@example.com",
+        )
+        self.ticket.submitter_id = user.id
+        self.ticket.save(update_fields=["submitter_id"])
+
+        self.client.force_login(user)
+
+        response = self.client.get(
+            "{}?ticket={}&email={}".format(
+                reverse("helpdesk:public_view"),
+                self.ticket.ticket_for_url,
+                "test.submitter@example.com",
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "helpdesk/public_view_ticket.html")
+
+    def test_authenticated_user_cannot_view_ticket_without_matching_submitter_id(self):
+        user = User.objects.create(
+            username="other-user",
+            email="test.submitter@example.com",
+        )
+        self.client.force_login(user)
+
+        response = self.client.get(
+            "{}?ticket={}&email={}".format(
+                reverse("helpdesk:public_view"),
+                self.ticket.ticket_for_url,
+                "test.submitter@example.com",
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "helpdesk/public_view_form.html")
+        self.assertContains(response, "Invalid ticket ID or e-mail address. Please try again.")
 
     def test_public_close(self):
         old_status = self.ticket.status
