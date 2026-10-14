@@ -156,3 +156,14 @@ class RealPagesTestCase(TestCase):
     def test_user_settings_form(self):
         self.client.login(username=self.user.username, password="password")
         self.assert_bootstrap5(self.client.get(reverse("helpdesk:user_settings")))
+
+
+class BaseHeadTemplateTestCase(TestCase):
+    def test_base_head_includes_local_fontawesome_stylesheet(self):
+        html = Template(
+            "{% load static %}{% include 'helpdesk/base-head.html' %}"
+        ).render(Context({"request": None, "user": None}))
+        self.assertIn(
+            "/static/helpdesk/vendor/fontawesome-free/css/all.min.css",
+            html,
+        )
