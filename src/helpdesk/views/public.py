@@ -229,8 +229,12 @@ class ViewTicket(TemplateView):
 
         try:
             _queue, ticket_id = Ticket.queue_and_id_from_query(ticket_req)
-            if request.user.is_authenticated and request.user.email == email:
-                ticket = Ticket.objects.get(id=ticket_id, submitter_email__iexact=email)
+            if request.user.is_authenticated:
+                ticket = Ticket.objects.get(
+                    id=ticket_id,
+                    submitter_id=request.user.id,
+                    submitter_email__iexact=email,
+                )
             else:
                 ticket = Ticket.objects.get(
                     id=ticket_id, submitter_email__iexact=email, secret_key__iexact=key

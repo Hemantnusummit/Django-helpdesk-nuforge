@@ -86,6 +86,8 @@ class TestTicketLookupPublicEnabled(TestCase):
         user = User.objects.create_user(
             username="submitter", email=self.ticket.submitter_email
         )
+        self.ticket.submitter_id = user.id
+        self.ticket.save(update_fields=["submitter_id"])
         self.client.force_login(user)
         response = self.client.get(
             reverse("helpdesk:public_view"),

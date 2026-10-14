@@ -644,6 +644,8 @@ class PublicTicketForm(AbstractTicketForm):
         Writes and returns a Ticket() object
         """
         ticket, queue = self._create_ticket()
+        if user and not user.is_staff:
+            ticket.submitter_id = user.id
         if queue.default_owner and not ticket.assigned_to:
             ticket.assigned_to = queue.default_owner
         ticket.save()

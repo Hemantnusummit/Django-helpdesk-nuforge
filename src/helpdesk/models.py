@@ -547,6 +547,13 @@ class Ticket(models.Model):
         ),
     )
 
+    submitter_id = models.IntegerField(
+        _("Submitter ID"),
+        blank=True,
+        null=True,
+        help_text=_("Authenticated submitter's Django user id, if known."),
+    )
+
     assigned_to = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,

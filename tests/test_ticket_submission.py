@@ -99,6 +99,7 @@ class TicketBasicsTestCase(TestCase):
 
         ticket = Ticket.objects.last()
         self.assertEqual(ticket.followup_set.count(), 1)
+        self.assertIsNone(ticket.submitter_id)
         # Follow up is anonymous
         self.assertIsNone(ticket.followup_set.first().user)
 
@@ -151,6 +152,7 @@ class TicketBasicsTestCase(TestCase):
 
         ticket = Ticket.objects.last()
         self.assertEqual(ticket.followup_set.count(), 1)
+        self.assertEqual(ticket.submitter_id, self.user.id)
         # Follow up is for registered user
         self.assertEqual(ticket.followup_set.first().user, self.user)
 
